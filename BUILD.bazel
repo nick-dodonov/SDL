@@ -63,12 +63,50 @@ cmake(
 )
 
 # Workaround for linkopts in cmake rule w/ space isn't passed to dependents correctly
-objc_library(
+cc_library(
     name = "sdl3_static",
-    #deps = [":sdl3_static_base"],
+    deps = [":sdl3_static_base"],
+    # link options to be passed up to the dependencies of this library
+    linkopts = select({
+        "@bazel_tools//src/conditions:darwin": [
+            "-framework", "CoreGraphics",
+            "-framework", "CoreAudio",
+            "-framework", "CoreHaptics",
+            "-framework", "CoreMedia",
+            "-framework", "CoreVideo",
+            "-framework", "AVFoundation",
+            "-framework", "AudioToolbox",
+            "-framework", "ForceFeedback",
+            "-framework", "GameController",
+            "-framework", "IOKit",
+            "-framework", "Carbon",
+            "-framework", "Metal",
+            "-framework", "AppKit",
+            "-framework", "QuartzCore",
+            "-framework", "UniformTypeIdentifiers",
+        ],
+        "@bazel_tools//src/conditions:windows": [
+            "User32.lib",   # Window functions (CreateWindow, MessageBox, etc.)
+            "Gdi32.lib",    # GDI functions (CreateDC, SelectObject, BitBlt, GetDeviceCaps, etc.)
+            "Advapi32.lib", # Registry functions (RegOpenKeyExW, etc.)
+            "Shell32.lib",  # Shell functions (ShellExecuteW, SHGetFolderPathW, etc.)
+            "Ole32.lib",    # COM functions (CoInitializeEx, CoCreateInstance, etc.)
+            "Oleaut32.lib", # OLE Automation functions (IDispatch, VARIANT, SysFreeString, etc.)
+            "Imm32.lib",    # IME Input Method Manager functions
+            "Winmm.lib",    # Windows Multimedia functions (timeBeginPeriod, etc.)
+            "Version.lib",  # Version functions (GetFileVersionInfo, etc.)
+            "Setupapi.lib", # Device Setup API functions (SetupDiGetClassDevs, etc.)
+            #"Cfgmgr32.lib", # Configuration Manager functions
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
 
+# Pure Bazel declarations for platforms
+objc_library(
+    name = "sdl3-darwin",
     srcs = glob([
-        #"src/**/*.h",
         "src/*.c",
         "src/atomic/*.c",
         "src/audio/*.c",
@@ -152,47 +190,44 @@ objc_library(
         ]),
     }),
     hdrs = glob(["include/**/*.h"]),
-    #strip_include_prefix = "include",
+    copts = [
+        # lot of warning: '<name>' is deprecated: first deprecated in macOS 13.0 - Use MTLGPUFamily instead [-Wdeprecated-declarations]
+        "-Wno-deprecated-declarations",
+        # SDL_tray.m:379:98: warning: undeclared selector 'menu:' [-Wundeclared-selector]
+        "-Wno-undeclared-selector",
+    ],
     includes = [
         "src",
         "include",
         "include/build_config",
         "src/video/khronos",
     ],
+    linkopts = [
+        "-framework", "CoreGraphics",
+        "-framework", "CoreAudio",
+        "-framework", "CoreHaptics",
+        "-framework", "CoreMedia",
+        "-framework", "CoreVideo",
+        "-framework", "AVFoundation",
+        "-framework", "AudioToolbox",
+        "-framework", "ForceFeedback",
+        "-framework", "GameController",
+        "-framework", "IOKit",
+        "-framework", "Carbon",
+        "-framework", "Metal",
+        "-framework", "AppKit",
+        "-framework", "QuartzCore",
+        "-framework", "UniformTypeIdentifiers",
+    ],
+    visibility = ["//visibility:private"],
+)
 
-    # link options to be passed up to the dependencies of this library
-    linkopts = select({
-        "@bazel_tools//src/conditions:darwin": [
-            "-framework", "CoreGraphics",
-            "-framework", "CoreAudio",
-            "-framework", "CoreHaptics",
-            "-framework", "CoreMedia",
-            "-framework", "CoreVideo",
-            "-framework", "AVFoundation",
-            "-framework", "AudioToolbox",
-            "-framework", "ForceFeedback",
-            "-framework", "GameController",
-            "-framework", "IOKit",
-            "-framework", "Carbon",
-            "-framework", "Metal",
-            "-framework", "AppKit",
-            "-framework", "QuartzCore",
-            "-framework", "UniformTypeIdentifiers",
-        ],
-        "@bazel_tools//src/conditions:windows": [
-            "User32.lib",   # Window functions (CreateWindow, MessageBox, etc.)
-            "Gdi32.lib",    # GDI functions (CreateDC, SelectObject, BitBlt, GetDeviceCaps, etc.)
-            "Advapi32.lib", # Registry functions (RegOpenKeyExW, etc.)
-            "Shell32.lib",  # Shell functions (ShellExecuteW, SHGetFolderPathW, etc.)
-            "Ole32.lib",    # COM functions (CoInitializeEx, CoCreateInstance, etc.)
-            "Oleaut32.lib", # OLE Automation functions (IDispatch, VARIANT, SysFreeString, etc.)
-            "Imm32.lib",    # IME Input Method Manager functions
-            "Winmm.lib",    # Windows Multimedia functions (timeBeginPeriod, etc.)
-            "Version.lib",  # Version functions (GetFileVersionInfo, etc.)
-            "Setupapi.lib", # Device Setup API functions (SetupDiGetClassDevs, etc.)
-            #"Cfgmgr32.lib", # Configuration Manager functions
-        ],
-        "//conditions:default": [],
+# Convenience library that depends on different static declarations
+cc_library(
+    name = "sdl3",
+    deps = select({
+        "@bazel_tools//src/conditions:darwin": [":sdl3-darwin"],
+        "//conditions:default": [":sdl3_static"], # cmake static version
     }),
     visibility = ["//visibility:public"],
 )
