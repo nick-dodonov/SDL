@@ -1,6 +1,7 @@
 # https://bazel-contrib.github.io/rules_foreign_cc/cmake.html
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -62,9 +63,103 @@ cmake(
 )
 
 # Workaround for linkopts in cmake rule w/ space isn't passed to dependents correctly
-cc_library(
+objc_library(
     name = "sdl3_static",
-    deps = [":sdl3_static_base"],
+    #deps = [":sdl3_static_base"],
+
+    srcs = glob([
+        #"src/**/*.h",
+        "src/*.c",
+        "src/atomic/*.c",
+        "src/audio/*.c",
+        "src/camera/*.c",
+        "src/core/*.c",
+        "src/cpuinfo/*.c",
+        "src/dynapi/*.c",
+        "src/events/*.c",
+        "src/io/*.c",
+        "src/io/generic/*.c",
+        "src/filesystem/*.c",
+        "src/gpu/*.c",
+        "src/joystick/*.c",
+        "src/haptic/*.c",
+        "src/hidapi/*.c",
+        "src/locale/*.c",
+        "src/main/*.c",
+        "src/misc/*.c",
+        "src/power/*.c",
+        "src/render/*.c",
+        "src/render/*/*.c",
+        "src/sensor/*.c",
+        "src/stdlib/*.c",
+        "src/storage/*.c",
+        "src/thread/*.c",
+        "src/time/*.c",
+        "src/timer/*.c",
+        "src/video/*.c",
+        "src/video/yuv2rgb/*.c",
+    ]) + select({
+        "@bazel_tools//src/conditions:darwin": glob([
+            "src/main/generic/*.c",
+            "src/time/unix/*.c",
+            "src/timer/unix/*.c",
+            "src/power/macos/*.c",
+            "src/loadso/dlopen/*.c",
+            "src/misc/macos/*.m",
+
+            "src/misc/macos/*.m",
+            "src/dialog/*.c",
+            "src/dialog/cocoa/*.m",
+
+            "src/filesystem/posix/*.c",
+            "src/filesystem/cocoa/*.m",
+
+            "src/locale/macos/*.m",
+
+            "src/audio/dummy/*.c",
+            "src/audio/disk/*.c",
+            "src/audio/coreaudio/*.m",
+
+            "src/camera/dummy/*.c",
+            "src/camera/coremedia/*.m",
+
+            "src/video/dummy/*.c",
+            "src/video/offscreen/*.c",
+            "src/video/cocoa/*.m",
+
+            "src/storage/generic/*.c",
+
+            "src/joystick/virtual/*.c",
+            "src/joystick/hidapi/*.c",
+            "src/joystick/apple/*.m",
+            "src/joystick/darwin/*.c",
+
+            "src/render/metal/*.m",
+            "src/gpu/metal/*.m",
+            "src/gpu/vulkan/*.c",
+
+            "src/thread/pthread/*.c",
+            "src/process/*.c",
+            "src/process/posix/*.c",
+
+            "src/sensor/dummy/*.c",
+            "src/sensor/coremotion/*.m",
+
+            "src/haptic/darwin/*.c",
+
+            "src/tray/*.c",
+            "src/tray/cocoa/*.m",
+        ]),
+    }),
+    hdrs = glob(["include/**/*.h"]),
+    #strip_include_prefix = "include",
+    includes = [
+        "src",
+        "include",
+        "include/build_config",
+        "src/video/khronos",
+    ],
+
     # link options to be passed up to the dependencies of this library
     linkopts = select({
         "@bazel_tools//src/conditions:darwin": [
