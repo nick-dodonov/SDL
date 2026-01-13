@@ -305,12 +305,14 @@ cc_library(
             "src/joystick/dummy/*.c",
             "src/misc/*.c",
             "src/misc/emscripten/*.c",
+            "src/filesystem/emscripten/*.c",
         ]
     ),
     copts = [
         "-DHAVE_STDIO_H",
         "-DSDL_TIMER_UNIX",
         "-DSDL_VIDEO_DRIVER_EMSCRIPTEN",
+        "-DSDL_FILESYSTEM_EMSCRIPTEN",
     ],
     hdrs = glob(["include/**/*.h"]),
     includes = [
