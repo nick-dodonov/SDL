@@ -1,10 +1,24 @@
 # https://bazel-contrib.github.io/rules_foreign_cc/cmake.html
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
 
-package(default_visibility = ["//visibility:public"])
+string_flag(
+    name = "build",
+    build_setting_default = "via_cmake",
+    values = [
+        "via_cmake",
+        "via_bazel",
+    ],
+    visibility = ["//visibility:public"],
+)
+config_setting(name = "via_cmake", flag_values = {":build": "via_cmake"})
+config_setting(name = "via_bazel", flag_values = {":build": "via_bazel"})
 
+################################
+# Build via CMake foreign rule
+################################
 filegroup(
     name = "all_srcs",
     srcs = glob(["**"]),
@@ -103,7 +117,9 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-# Pure Bazel declarations for platforms
+################################
+# Build via pure Bazel rules
+################################
 GENERAL_SRCS = [
     "src/*.c",
     "src/atomic/*.c",
@@ -215,7 +231,7 @@ HIDAPI_JOYSTICK_SRCS = ["src/joystick/hidapi/*.c"]
 VULKAN_GPU_SRCS = ["src/gpu/vulkan/*.c"]
 
 objc_library(
-    name = "sdl3-darwin",
+    name = "sdl3_darwin",
     srcs = glob(
         GENERAL_SRCS
         + GENERAL_MAIN_SRCS
@@ -284,7 +300,7 @@ objc_library(
 )
 
 cc_library(
-    name = "sdl3-wasm",
+    name = "sdl3_wasm",
     srcs = glob(
         GENERAL_SRCS
         + DUMMYAUDIO_SRCS
@@ -295,9 +311,7 @@ cc_library(
             "src/main/emscripten/*.c",
             "src/thread/generic/*.c",
             "src/tray/dummy/*.c",
-            #"src/stdlib/*.c",
             "src/libm/*.c",
-            #"src/time/unix/*.c",
             "src/timer/unix/*.c",
             "src/video/dummy/*.c",
             "src/video/emscripten/*.c",
@@ -323,15 +337,25 @@ cc_library(
     visibility = ["//visibility:private"],
 )
 
-# Convenience library that depends on different static declarations
+cc_library(
+    name = "sdl3_bazel",
+    deps = select({
+        "@bazel_tools//src/conditions:darwin": [":sdl3_darwin"],
+        "@platforms//cpu:wasm32": [":sdl3_wasm"],
+
+        # fallback on undone platform - via cmake rule
+        "//conditions:default": [":sdl3_static"],
+    })
+)
+
+################################
+# Convenience library depending on selected rule feature
+################################
 cc_library(
     name = "sdl3",
     deps = select({
-        "@bazel_tools//src/conditions:darwin": [":sdl3-darwin"],
-        "@platforms//cpu:wasm32": [":sdl3-wasm"],
-
-        # fallback - static library via cmake rule
-        "//conditions:default": [":sdl3_static"],
+        ":via_cmake": [":sdl3_static"],
+        ":via_bazel": [":sdl3_bazel"],
     }),
     visibility = ["//visibility:public"],
 )
