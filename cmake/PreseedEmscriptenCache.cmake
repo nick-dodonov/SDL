@@ -181,5 +181,21 @@ if(EMSCRIPTEN)
     set(HAVE_PPOLL                                       ""    CACHE INTERNAL "Have symbol ppoll")
     set(HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR           ""    CACHE INTERNAL "Have symbol posix_spawn_file_actions_addchdir")
     set(HAVE_POSIX_SPAWN_FILE_ACTIONS_ADDCHDIR_NP        "1"   CACHE INTERNAL "Have symbol posix_spawn_file_actions_addchdir_np")
+
+    #### Extending with new added values in SDL3 sources and TX
+    set(COMPILER_SUPPORTS_FCOLOR_DIAGNOSTICS             "1"   CACHE INTERNAL "Test COMPILER_SUPPORTS_FCOLOR_DIAGNOSTICS")
+    set(HAVE_GETRESGID                                   ""   CACHE INTERNAL "Have symbol getresgid")
+    set(HAVE_GETRESUID                                   ""   CACHE INTERNAL "Have symbol getresuid")
+    set(HAVE_PTHREADS                                    "1"   CACHE INTERNAL "Have pthreads")
+    set(HAVE_RECURSIVE_MUTEXES                           "1"   CACHE INTERNAL "Have recursive mutexes")
+    set(HAVE_PTHREADS_SEM                                "1"   CACHE INTERNAL "Have pthreads semaphores")
+    set(COMPILER_HAS_SEM_TIMEDWAIT                       "1"   CACHE INTERNAL "Test COMPILER_HAS_SEM_TIMEDWAIT")
+
+    set(HAVE_PTHREAD_H                                   "1"   CACHE INTERNAL "Have pthread.h")
+    set(HAVE_PTHREAD_NP_H                                ""   CACHE INTERNAL "Have pthread_np.h")
+    set(HAVE_PTHREAD_SETNAME_NP                          ""   CACHE INTERNAL "Have pthread_setname_np")
+    set(HAVE_POSIX_SPAWN                                 ""   CACHE INTERNAL "Have symbol posix_spawn")
+    set(LIBC_HAS_VFORK                                   "1"   CACHE INTERNAL "Have symbol vfork")
+    ####
   endfunction()
 endif()
